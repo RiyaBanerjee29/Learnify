@@ -16,43 +16,59 @@ import { ApiResponse } from "../utils/ApiResponse.js";
  * 8. check if user is successfully created or not
  * 9. return res
  */
+
 const registerUser = asyncHandler(async (req, res) => {
-  const { email, name, password , usertype } = req.body;
-  console.log("email", email);
+  const { name, email, usertype, password } = req.body;
+  console.log(name, email, usertype, password);
 
-  if ([email, name, password , usertype].some((item) => item?.trim() === "")) {
-    throw new ApiError(400, "All fields are required");
-  }
-  const existingUser = User.findOne({ email });
-  console.log(existingUser);
-  if (existingUser) {
-    throw new ApiError(409, "User already Exists");
+  if ([name, email, usertype, password].some((field) => field?.trim() === "")) {
+    //checking if all fields are there or not
+    throw new ApiError(400, "ALl firlds are required");
   }
 
+  //checking if user already exists or not
+  const userExists = await User.findOne({ email });
+  if (userExists) {
+    throw new ApiError(409, "User with same email exists");
+  }
+
+  //picture upload to cloudinary
   const avatarLocalPath = req.files?.avatar[0]?.path;
-  console.log(avatarLocalPath, req.files);
+  console.log("req.files", req.files);
+
   if (!avatarLocalPath) {
     throw new ApiError(400, "Avatar file is required");
   }
+
   const avatar = await uploadOnCloudinary(avatarLocalPath);
   if (!avatar) {
-    throw new ApiError(400, "Avatar file not uploaded");
+    throw new ApiError(400, "Avatar file is required");
   }
-  const newUser = await User.create({
+  console.log("Successfully uploaded on cloudinary");
+
+  //creating new user in DB
+  const userObject = await User.create({
+    name,
     email,
-    avatar : avatar.url,
+    usertype,
     password,
-    name 
-  })
-  const createdUser = User.findById(newUser._id).select(
-    "-password  -refreshToken"
-  )
-  if(!createdUser){
-     throw new ApiError(500 , "something went wrong while creating account");
+    avatar: avatar.url,
+  });
+  if (!userObject) {
+    throw new ApiError(500, "Something went wrong while registering the user");
+  } else {
+    const response = {
+      name: userObject.name,
+      email: userObject.email,
+      usertype: userObject.usertype,
+      avatar: userObject.avatar,
+      posts: userObject.posts,
+    };
+    console.log("user created", userObject);
   }
-  return res.status(201).json(
-    new ApiResponse(200 , createdUser , "User registered successfully")
-  )
+  return res
+    .status(201)
+    .json(new ApiResponse(201, "user registered successfully"));
 });
 
 export { registerUser };

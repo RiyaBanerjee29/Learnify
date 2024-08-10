@@ -9,13 +9,6 @@ const userSchema = new mongoose.Schema(
       trim: true,
       //whenever u want optimsed searching st this to true
     },
-    userid: {
-      type: String,
-      required: true,
-      unique: true,
-      trim: true,
-      index: true, //whenever u want optimsed searching st this to true
-    },
     email: {
       type: String,
       required: true,
@@ -26,14 +19,14 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ["Caretaker", "Adopter"],
       required: true,
-    },
+    }, 
     password: {
       type: String,
       required: [true, "password is required"],
     },
     avatar: {
       type: String, // cloudinary url
-      required: true,
+      //required: true,
     },
     posts: [
       {
@@ -51,7 +44,7 @@ const userSchema = new mongoose.Schema(
 );
 
 userSchema.pre("save", async function (next) {
-  if (!this.isModifies("password")) return next();
+  if (!this.isModified("password")) return next();
 
   this.password = await bcrypt.hash(this.password, 8);
   next();
