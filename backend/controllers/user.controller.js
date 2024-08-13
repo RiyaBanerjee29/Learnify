@@ -111,6 +111,8 @@ const LoginUser = asyncHandler(async (req, res) => {
   // add refresh tomen to the database
 
   const { email, password } = req.body;
+  console.log("email",email)
+  console.log("password",password)
   if (!email) {
     throw new ApiError(400, "Email is required");
   }
@@ -132,7 +134,7 @@ const LoginUser = asyncHandler(async (req, res) => {
     user._id
   );
   user.refreshToken = refreshToken;
-  user.accessToken = accessToken;
+  // user.accessToken = accessToken;
 
   const options = {
     httpOnly: true,
@@ -160,10 +162,14 @@ const logoutUser = asyncHandler(async (req, res) => {
       refreshToken: undefined 
     },
   });
+  const options = {
+    httpOnly: true,
+    secure: true
+}
   return res
   .status(200)
-  .clearCookie("accessToken",option)
-  .clearCookie("refreshToken",option)
+  .clearCookie("accessToken",options)
+  .clearCookie("refreshToken",options)
   .json(new ApiResponse(200,{},"user logged out"))
 
 });
