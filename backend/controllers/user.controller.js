@@ -3,7 +3,7 @@ import { ApiError } from "../utils/ApiErrors.js";
 import { User } from "../models/UserSchema.js";
 import uploadOnCloudinary from "../utils/Cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import { response } from "express";
+import { json, response } from "express";
 import jwt from "jsonwebtoken";
 
 const generateAccessAndRefreshToken = async (userId) => {
@@ -185,28 +185,114 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     incomingRefreshToken,
     process.env.REFRESH_TOKEN_SECRET
   );
-  console.log("decoded", decodedeToken);  // this gives us hte initial payload that we set 
-  
-  const user = await  User.findById(decodedeToken._id)
+  console.log("decoded", decodedeToken); // this gives us hte initial payload that we set
 
-  if(!user){
-       throw new ApiError(400,"Invalid Token")
+  const user = await User.findById(decodedeToken._id);
+
+  if (!user) {
+    throw new ApiError(400, "Invalid Token");
   }
-  const {accessToken , newRefreshToken} =  await generateAccessAndRefreshToken(decodedeToken._id)
+  const { accessToken, newRefreshToken } = await generateAccessAndRefreshToken(
+    decodedeToken._id
+  );
 
   const option = {
     httpOnly: true,
-    secure : true,
-  }
+    secure: true,
+  };
   return res
     .status(200)
     .cookie("accessToken", accessToken, option)
     .cookie("refreshToken", newRefreshToken, option)
     .json(
-      new ApiResponse( 200,
-        { user},
-        "Refresh Token Genertaed successfully"
-      )
+      new ApiResponse(200, { user }, "Refresh Token Genertaed successfully")
     );
-})
-export { registerUser, LoginUser, logoutUser, refreshAccessToken };
+});
+
+const changeCurrentPassword = asyncHandler(async (req, res) => {
+  const { oldPassword, newPassword } = req.body;
+
+   console.log(oldPassword , newPassword)
+
+  const user = await User.findById(req.user?._id);
+  const isPasswordCorrecct = await user.isPasswordCorrect(oldPassword);
+   console.log("passord correct hai?", isPasswordCorrecct)
+
+  if (!isPasswordCorrecct) {
+    throw new ApiError(400, "wrong old password");
+  }
+  user.password = newPassword;
+
+  const passwordSaved = await user.save({ validateBeforeSave: true });
+  console.log("password Save hua?" , passwordSaved)
+  if(passwordSaved){
+    console.log("return hone wala h")
+    return res
+    .status(200)
+      .json(new ApiResponse(200, {}, "Password changed successfully"))
+    
+
+  }
+});
+
+const getCurrentUser = asyncHandler(async (req, res) => {
+  return res
+    .status(200)
+    .json(new ApiResponse(200, req.user, "User changed successfully"));
+});
+
+const updateCurrentUser = asyncHandler(async (req, res) => {
+  const userId = req.user?._id;
+  const { usertype, name } = req.body;
+
+  if (!usertype || !name) {
+    throw ApiError(400, "All fields are required");
+  }
+  const user = await User.findByIdAndUpdate(
+    userId,
+    {
+      $set: {
+        name,
+        usertype,
+      },
+    },
+    { new: true }
+  ).select("-password");
+  return res
+    .status(200)
+    .json(new ApiResponse(200, user, "Account details updated successfully"));
+});
+
+const updateAvatar = asyncHandler(async (req, res) => {
+     const avatarLocalPath = req.file?.path
+     if(!avatarLocalPath){
+      throw ApiError(400 , "no avatar file")
+     }
+
+     const avatar = await uploadOnCloudinary(avatarLocalPath)
+     if(!avatar){
+      throw ApiError(400 , " avatar file upload failed on cloudinary")
+     }
+     await User.findByIdAndUpdate(
+      req.user?._id,
+      {
+              $set:{
+                avatar : avatar.url
+              }
+      },
+      {new : true}
+     ).select("-password")
+     return res
+     .status(200)
+     .json(new ApiResponse(200 , "Avatar updated"))
+});
+export {
+  registerUser,
+  LoginUser,
+  logoutUser,
+  refreshAccessToken,
+  changeCurrentPassword,
+  getCurrentUser,
+  updateCurrentUser,
+  updateAvatar
+};

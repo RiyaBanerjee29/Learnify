@@ -2,12 +2,6 @@ import mongoose, { Schema } from "mongoose";
 
 const postSchema = new Schema(
   {
-    postId: {
-      type: String,
-      required: true,
-      index: true,
-      unique: true,
-    },
     postname: {
       type: String,
       require: true,
@@ -16,6 +10,10 @@ const postSchema = new Schema(
       type: String, //cloudinary
     },
     breed: {
+      type: String,
+      require: true,
+    },
+    location :{
       type: String,
       require: true,
     },
@@ -31,6 +29,9 @@ const postSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "Post",
     },
+    isActive : {
+      type : Boolean
+    }
   },
   {
     timestamps: true,
