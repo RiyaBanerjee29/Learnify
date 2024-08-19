@@ -2,11 +2,11 @@ import mongoose, { Schema } from "mongoose";
 
 const postSchema = new Schema(
   {
-    postname: {
+    name: {
       type: String,
       require: true,
     },
-    postImage: {
+    image: {
       type: String, //cloudinary
     },
     breed: {
@@ -16,6 +16,18 @@ const postSchema = new Schema(
     location :{
       type: String,
       require: true,
+    },
+    age :{
+      type : Number,
+      require : true
+    },
+    vaccinated:{
+      type : Boolean,
+      require : true
+    },
+    neutered:{
+      type : Boolean,
+      require : true
     },
     createdAt: {
       type: Date,

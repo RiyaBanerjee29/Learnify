@@ -14,9 +14,11 @@ app.use(cookieParser())
 
 //routs import
 import userRoutes from "../routes/userRoutes.js"
+import postRoutes from "../routes/postRoutes.js"
 
 //routes declaration
 app.use("/api/v1/users" , userRoutes)
+app.use("/api/v1/post" , postRoutes)
 
 
 export default app
